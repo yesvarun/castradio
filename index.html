@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#1a0a08" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Osho Radio" />
+<title>ओशो · Hindi Radio</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-deep: #140806;
+    --ember-bright: #ff9142;
+    --saffron: #e8a05c;
+    --cream: #f4e4cf;
+    --cream-muted: rgba(244, 228, 207, 0.55);
+    --gold: #c9925a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; overscroll-behavior: none; }
+
+  body {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    background: var(--bg-deep);
+    color: var(--cream);
+    min-height: 100dvh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: max(28px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .ember-glow {
+    position: fixed;
+    top: 40%; left: 50%;
+    width: min(90vw, 700px);
+    height: min(90vw, 700px);
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 145, 66, 0.25) 0%,
+      rgba(217, 116, 56, 0.15) 30%,
+      transparent 70%);
+    transform: translate(-50%, -50%);
+    filter: blur(20px);
+    animation: breathe 9s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  }
+
+  .app {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .om {
+    font-family: 'Tiro Devanagari Sanskrit', serif;
+    font-size: 34px;
+    color: var(--ember-bright);
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(255, 145, 66, 0.4);
+  }
+
+  .devanagari-title {
+    font-family: 'Tiro Devanagari Sanskrit', serif;
+    font-size: 20px;
+    color: var(--cream);
+    letter-spacing: 1px;
+  }
+
+  .latin-title {
+    font-size: 10px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--cream-muted);
+    margin-top: 2px;
+  }
+
+  .play-btn {
+    position: relative;
+    width: 160px; height: 160px;
+    border: none;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%,
+      #ffb06a 0%, #ff8333 35%, #c55a1e 75%, #7a2d0a 100%);
+    cursor: pointer;
+    box-shadow:
+      0 0 50px rgba(255, 130, 50, 0.45),
+      inset 0 3px 10px rgba(255, 220, 180, 0.4),
+      inset 0 -5px 16px rgba(80, 20, 0, 0.5);
+    color: var(--cream);
+    transition: transform 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    margin: 8px 0;
+  }
+
+  .play-btn:active { transform: scale(0.94); }
+  .play-btn.playing {
+    background: radial-gradient(circle at 30% 30%, #8a5e3c 0%, #5a3824 40%, #2e1810 100%);
+    box-shadow: 0 0 30px rgba(180, 100, 50, 0.3), inset 0 2px 8px rgba(200, 150, 100, 0.2);
+  }
+  .play-btn.loading { opacity: 0.85; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid rgba(244, 228, 207, 0.2);
+    border-top-color: var(--cream);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .card {
+    width: 100%;
+    max-width: 380px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, rgba(40, 18, 10, 0.6) 0%, rgba(20, 8, 6, 0.4) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(201, 146, 90, 0.15);
+    border-radius: 2px;
+    text-align: center;
+  }
+
+  .np-label {
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+    opacity: 0.8;
+  }
+
+  .np-title {
+    font-family: 'Tiro Devanagari Sanskrit', serif;
+    font-size: 16px;
+    color: var(--cream);
+    line-height: 1.4;
+    font-style: italic;
+    min-height: 22px;
+  }
+  .np-title.idle {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--cream-muted);
+  }
+  .np-title.error { color: #ff9a7a; font-size: 13px; line-height: 1.5; }
+
+  .timer-ring {
+    position: relative; width: 72px; height: 72px;
+  }
+  .timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 1.5; }
+  .timer-ring .bg { stroke: rgba(201, 146, 90, 0.2); }
+  .timer-ring .fg {
+    stroke: var(--saffron);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s linear;
+    filter: drop-shadow(0 0 6px rgba(232, 160, 92, 0.5));
+  }
+  .timer-text {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--cream); font-weight: 300;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-text .t { font-size: 18px; letter-spacing: 1px; }
+  .timer-text .l { font-size: 7px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; }
+
+  .controls {
+    display: flex; gap: 8px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s, transform 0.4s;
+    pointer-events: none;
+  }
+  .controls.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+  .ctrl {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid rgba(201, 146, 90, 0.3);
+    border-radius: 100px;
+    color: var(--saffron);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    font-style: italic;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .ctrl:active { background: rgba(201, 146, 90, 0.15); transform: scale(0.96); }
+
+  /* Status / diagnostic strip */
+  .status {
+    font-size: 11px;
+    color: var(--cream-muted);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    line-height: 1.5;
+    min-height: 16px;
+    padding: 8px 14px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 2px;
+    border-left: 2px solid var(--gold);
+    text-align: left;
+    width: 100%;
+    max-width: 380px;
+    word-break: break-all;
+  }
+  .status.good { color: #b5e2b0; border-left-color: #7ec77a; }
+  .status.bad { color: #ff9a7a; border-left-color: #ff6b47; }
+
+  .helper-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+
+  .helper-link {
+    color: var(--saffron);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(232, 160, 92, 0.4);
+    padding: 4px 0;
+    font-style: italic;
+  }
+
+  @media (max-height: 700px) {
+    .play-btn { width: 130px; height: 130px; }
+    .om { font-size: 28px; }
+    .devanagari-title { font-size: 18px; }
+    .app { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ember-glow"></div>
+
+<div class="app">
+
+  <div class="masthead">
+    <div class="om">ॐ</div>
+    <div class="devanagari-title">ओशो रेडियो</div>
+    <div class="latin-title">Hindi · Pravachan</div>
+  </div>
+
+  <div class="card">
+    <div class="np-label">अभी सुन रहे हैं</div>
+    <div class="np-title idle" id="npTitle">शुरू करने के लिए दबाएँ</div>
+  </div>
+
+  <button class="play-btn" id="playBtn" aria-label="Play">
+    <span id="playIcon">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="currentColor" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    </span>
+  </button>
+
+  <div class="controls" id="controls">
+    <button class="ctrl" id="skipBtn">Next talk</button>
+    <button class="ctrl" id="stopBtn">Stop now</button>
+  </div>
+
+  <div class="timer-ring">
+    <svg viewBox="0 0 100 100">
+      <circle class="bg" cx="50" cy="50" r="46"/>
+      <circle class="fg" id="ringFg" cx="50" cy="50" r="46"
+              stroke-dasharray="289.03" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-text">
+      <div class="t" id="timerText">20:00</div>
+      <div class="l">Auto-stop</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">Ready. Tap the button to begin.</div>
+
+  <div class="helper-row">
+    <a class="helper-link" id="testAudioBtn" href="#">🔊 Test audio on this device</a>
+    <a class="helper-link" id="castBtn" href="#" hidden>📺 Play on Nest</a>
+    <a class="helper-link" href="https://archive.org/download/OSHO-BhaktiSutra-Hindi-Audio/OSHO-Bhakti_Sutra_01.mp3" target="_blank" rel="noopener">🔗 Test archive.org link</a>
+  </div>
+
+</div>
+
+<!-- IMPORTANT: audio element must exist at page load so it can be primed.
+     Not using crossorigin to avoid CORS preflight issues. -->
+<audio id="audio" preload="auto" playsinline webkit-playsinline></audio>
+
+<script>
+(function() {
+  'use strict';
+
+  // ---- Library: 147 Hindi talks via multiple URL patterns -----------------
+  const pad = (n, w) => String(n).padStart(w, '0');
+  const TALKS = [];
+  for (let i = 1; i <= 20; i++) {
+    TALKS.push({
+      urls: [
+        `https://archive.org/download/OSHO-BhaktiSutra-Hindi-Audio/OSHO-Bhakti_Sutra_${pad(i,2)}.mp3`,
+      ],
+      series: 'भक्ति सूत्र', part: i,
+    });
+  }
+  for (let i = 1; i <= 127; i++) {
+    TALKS.push({
+      urls: [
+        `https://archive.org/download/shell_osho/OSHO-Tao_Upanishad_${pad(i,3)}.mp3`,
+      ],
+      series: 'ताओ उपनिषद', part: i,
+    });
+  }
+
+  const TOTAL_SECONDS = 20 * 60;
+  const CIRC = 2 * Math.PI * 46;
+
+  const $ = id => document.getElementById(id);
+  const audio = $('audio');
+  const playBtn = $('playBtn');
+  const playIcon = $('playIcon');
+  const npTitle = $('npTitle');
+  const controls = $('controls');
+  const timerText = $('timerText');
+  const ringFg = $('ringFg');
+  const status = $('status');
+
+  let isPlaying = false;
+  let currentTalk = null;
+  let currentUrl = null;
+  let secondsLeft = TOTAL_SECONDS;
+  let tickerId = null;
+  let lastTick = null;
+  let talkFailCount = 0;
+  const MAX_FAILS = 6;
+
+  // ---- Status line (visible debugging) ------------------------------------
+  function setStatus(msg, kind) {
+    status.textContent = msg;
+    status.classList.remove('good', 'bad');
+    if (kind === 'good') status.classList.add('good');
+    if (kind === 'bad') status.classList.add('bad');
+    console.log('[osho]', msg);
+  }
+
+  // ---- Play icon states ---------------------------------------------------
+  function setPlayIcon(state) {
+    playBtn.classList.remove('loading', 'playing');
+    if (state === 'loading') {
+      playIcon.innerHTML = '<div class="spinner"></div>';
+      playBtn.classList.add('loading');
+    } else if (state === 'pause') {
+      playIcon.innerHTML = '<svg width="38" height="38" viewBox="0 0 24 24" fill="currentColor" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+      playBtn.classList.add('playing');
+    } else {
+      playIcon.innerHTML = '<svg width="42" height="42" viewBox="0 0 24 24" fill="currentColor" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));"><path d="M8 5v14l11-7z"/></svg>';
+    }
+  }
+
+  function showTitle(talk) {
+    npTitle.classList.remove('idle', 'error');
+    npTitle.innerHTML =
+      `<div style="font-size:10px;letter-spacing:3px;opacity:0.65;margin-bottom:3px;text-transform:uppercase;">${talk.series}</div>
+       <div>प्रवचन · ${talk.part}</div>`;
+  }
+
+  function setIdle(text) {
+    npTitle.classList.remove('error');
+    npTitle.classList.add('idle');
+    npTitle.innerHTML = text;
+  }
+
+  function setError(html) {
+    npTitle.classList.remove('idle');
+    npTitle.classList.add('error');
+    npTitle.innerHTML = html;
+  }
+
+  function fmt(s) {
+    s = Math.max(0, Math.floor(s));
+    return `${pad(Math.floor(s/60),2)}:${pad(s%60,2)}`;
+  }
+
+  function renderTimer() {
+    timerText.textContent = fmt(secondsLeft);
+    const progress = 1 - (secondsLeft / TOTAL_SECONDS);
+    ringFg.style.strokeDashoffset = (CIRC * progress).toFixed(2);
+  }
+
+  function startTicker() {
+    stopTicker();
+    lastTick = Date.now();
+    tickerId = setInterval(() => {
+      const now = Date.now();
+      secondsLeft -= (now - lastTick) / 1000;
+      lastTick = now;
+      if (secondsLeft <= 0) {
+        secondsLeft = 0;
+        renderTimer();
+        endSession(false);
+        return;
+      }
+      renderTimer();
+    }, 250);
+  }
+
+  function stopTicker() {
+    if (tickerId) { clearInterval(tickerId); tickerId = null; }
+  }
+
+  function pickRandomTalk() {
+    let t;
+    do { t = TALKS[Math.floor(Math.random() * TALKS.length)]; }
+    while (currentTalk && t === currentTalk && TALKS.length > 1);
+    return t;
+  }
+
+  // ---- THE KEY FIX: synchronous play() inside click handler ---------------
+  // iOS Safari requires audio.play() to be called directly inside the user
+  // gesture handler. Any await/async between the click and .play() can cause
+  // the browser to block playback silently.
+  function loadAndPlay(talk) {
+    currentTalk = talk;
+    currentUrl = talk.urls[0];
+    showTitle(talk);
+    setPlayIcon('loading');
+    setStatus(`Loading: ${talk.series} #${talk.part}…`);
+
+    audio.src = currentUrl;
+    // Don't call load() explicitly — setting src triggers load automatically,
+    // and calling load() again can cancel the pending play() on some mobile browsers.
+
+    const promise = audio.play();
+    if (promise !== undefined) {
+      promise.then(() => {
+        setStatus(`▶ Playing: ${talk.series} #${talk.part}`, 'good');
+        setPlayIcon('pause');
+        talkFailCount = 0;
+      }).catch(err => {
+        setStatus(`Play rejected: ${err.name} — ${err.message || 'no message'}`, 'bad');
+        handleFailure('play-rejected');
+      });
+    }
+  }
+
+  function handleFailure(reason) {
+    if (!isPlaying) return;
+    talkFailCount++;
+    if (talkFailCount > MAX_FAILS) {
+      setError('Cannot reach archive.org audio.<br/>Your network may be blocking it.');
+      setStatus(`Gave up after ${MAX_FAILS} retries. Last: ${reason}`, 'bad');
+      endSession(true);
+      return;
+    }
+    setStatus(`Retry ${talkFailCount}/${MAX_FAILS} (${reason})…`);
+    setTimeout(() => {
+      if (isPlaying) loadAndPlay(pickRandomTalk());
+    }, 300);
+  }
+
+  // ---- Audio element events -----------------------------------------------
+  audio.addEventListener('loadedmetadata', () => {
+    if (audio.duration && isFinite(audio.duration) && audio.duration > 60) {
+      const maxStart = audio.duration * 0.75;
+      try { audio.currentTime = Math.random() * maxStart; }
+      catch (e) { /* ignore */ }
+    }
+  });
+
+  audio.addEventListener('error', () => {
+    const codes = {1:'ABORTED', 2:'NETWORK', 3:'DECODE', 4:'SRC_NOT_SUPPORTED'};
+    const code = audio.error ? codes[audio.error.code] || audio.error.code : 'unknown';
+    handleFailure(`audio.error=${code}`);
+  });
+
+  audio.addEventListener('ended', () => {
+    if (isPlaying && secondsLeft > 0) loadAndPlay(pickRandomTalk());
+  });
+
+  audio.addEventListener('playing', () => {
+    if (isPlaying) {
+      setPlayIcon('pause');
+      setStatus(`▶ Playing (${Math.floor(audio.currentTime)}s into talk)`, 'good');
+    }
+  });
+
+  audio.addEventListener('waiting', () => {
+    if (isPlaying) setPlayIcon('loading');
+  });
+
+  audio.addEventListener('stalled', () => {
+    setStatus('Stream stalled, waiting…');
+  });
+
+  // ---- Session control ----------------------------------------------------
+  function startSession() {
+    isPlaying = true;
+    secondsLeft = TOTAL_SECONDS;
+    renderTimer();
+    talkFailCount = 0;
+    startTicker();
+    controls.classList.add('visible');
+    loadAndPlay(pickRandomTalk());
+  }
+
+  function pauseSession() {
+    audio.pause();
+    stopTicker();
+    isPlaying = false;
+    setPlayIcon('play');
+    setStatus('Paused. Tap to resume.');
+  }
+
+  function resumeSession() {
+    isPlaying = true;
+    startTicker();
+    const p = audio.play();
+    if (p) p.then(() => {
+      setPlayIcon('pause');
+      setStatus('▶ Resumed', 'good');
+    }).catch(err => {
+      setStatus(`Resume failed: ${err.message}`, 'bad');
+      handleFailure('resume-rejected');
+    });
+  }
+
+  function endSession(silent) {
+    stopTicker();
+    audio.pause();
+    try { audio.removeAttribute('src'); audio.load(); } catch(e) {}
+    isPlaying = false;
+    currentTalk = null;
+    currentUrl = null;
+    secondsLeft = TOTAL_SECONDS;
+    renderTimer();
+    setPlayIcon('play');
+    controls.classList.remove('visible');
+    if (!silent) {
+      setIdle('सत्र समाप्त · नमस्ते');
+      setStatus('Session ended. Tap to begin again.');
+    }
+  }
+
+  // ---- Interactions -------------------------------------------------------
+  playBtn.addEventListener('click', () => {
+    setStatus(`Tap registered (isPlaying=${isPlaying}, hasTalk=${!!currentTalk})`);
+    if (!isPlaying && !currentTalk) {
+      startSession();
+      autoNest(); // same tap: opens Nest picker (remembered after first choice)
+    } else if (isPlaying) {
+      pauseSession();
+    } else {
+      resumeSession();
+    }
+  });
+
+  $('skipBtn').addEventListener('click', () => {
+    if (isPlaying) {
+      talkFailCount = 0;
+      loadAndPlay(pickRandomTalk());
+    }
+  });
+
+  $('stopBtn').addEventListener('click', () => endSession(false));
+
+  // ---- Diagnostic: test audio on this device ------------------------------
+  $('testAudioBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    setStatus('Generating test tone…');
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        setStatus('Web Audio not supported on this browser', 'bad');
+        return;
+      }
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 440;
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.7);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.7);
+      setStatus('✓ Test tone played. Audio works on this device.', 'good');
+    } catch (err) {
+      setStatus(`Test tone failed: ${err.message}`, 'bad');
+    }
+  });
+
+  // ---- Google Nest / Cast -------------------------------------------------
+  // Browsers cannot silently pick a speaker. Chrome shows a device picker on a
+  // tap. After you choose Nest once, every Play tap opens the picker at once.
+  const castBtn = $('castBtn');
+  const remote = audio.remote;
+  audio.disableRemotePlayback = false;
+
+  function nestPrompt() {
+    if (!remote) return;
+    remote.prompt().then(() => {
+      try { localStorage.nestAuto = '1'; } catch (e) {}
+    }).catch(e => {
+      setStatus(e.name === 'NotFoundError' ? 'No Nest found on Wi-Fi' : 'Cast cancelled');
+    });
+  }
+
+  function autoNest() {
+    let on = false;
+    try { on = localStorage.nestAuto === '1'; } catch (e) {}
+    if (remote && on && remote.state === 'disconnected') nestPrompt();
+  }
+
+  if (remote) {
+    remote.onconnecting = () => setStatus('Connecting to Nest…');
+    remote.onconnect = () => setStatus('▶ Playing on Nest', 'good');
+    remote.ondisconnect = () => setStatus('Playing on phone');
+    castBtn.addEventListener('click', e => { e.preventDefault(); nestPrompt(); });
+    if (remote.watchAvailability) {
+      remote.watchAvailability(a => { castBtn.hidden = !a; })
+            .catch(() => { castBtn.hidden = false; });
+    } else {
+      castBtn.hidden = false;
+    }
+  }
+
+  // ---- Boot ---------------------------------------------------------------
+  renderTimer();
+  setStatus(`Ready. ${TALKS.length} talks in library.`);
+})();
+</script>
+
+</body>
+</html>
