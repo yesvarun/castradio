@@ -307,7 +307,7 @@
 
   <div class="helper-row">
     <a class="helper-link" id="testAudioBtn" href="#">🔊 Test audio on this device</a>
-    <a class="helper-link" id="castBtn" href="#" hidden>📺 Play on Nest</a>
+    <a class="helper-link" id="castBtn" href="#">📺 Play on Nest</a>
     <a class="helper-link" href="https://archive.org/download/OSHO-BhaktiSutra-Hindi-Audio/OSHO-Bhakti_Sutra_01.mp3" target="_blank" rel="noopener">🔗 Test archive.org link</a>
   </div>
 
@@ -631,7 +631,7 @@
     remote.prompt().then(() => {
       try { localStorage.nestAuto = '1'; } catch (e) {}
     }).catch(e => {
-      setStatus(e.name === 'NotFoundError' ? 'No Nest found on Wi-Fi' : 'Cast cancelled');
+      setStatus(e.name === 'NotFoundError' ? 'No Nest found — same Wi-Fi? Nest awake?' : 'Cast: ' + e.name);
     });
   }
 
@@ -642,16 +642,22 @@
   }
 
   if (remote) {
+    // Chrome only reports Cast devices once the audio element has a source,
+    // so give it one up front (preload none = no data used until Play).
+    audio.preload = 'none';
+    audio.src = TALKS[0].urls[0];
     remote.onconnecting = () => setStatus('Connecting to Nest…');
     remote.onconnect = () => setStatus('▶ Playing on Nest', 'good');
     remote.ondisconnect = () => setStatus('Playing on phone');
     castBtn.addEventListener('click', e => { e.preventDefault(); nestPrompt(); });
     if (remote.watchAvailability) {
-      remote.watchAvailability(a => { castBtn.hidden = !a; })
-            .catch(() => { castBtn.hidden = false; });
-    } else {
-      castBtn.hidden = false;
+      remote.watchAvailability(a => {
+        castBtn.textContent = a ? '📺 Play on Nest' : '📺 Nest (searching…)';
+      }).catch(() => {});
     }
+  } else {
+    castBtn.textContent = '📺 Cast not supported here — open in Chrome';
+    castBtn.addEventListener('click', e => e.preventDefault());
   }
 
   // ---- Boot ---------------------------------------------------------------
