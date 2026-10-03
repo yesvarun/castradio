@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
 <meta name="theme-color" content="#1a0a08" />
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Osho Radio" />
@@ -658,6 +661,34 @@
   } else {
     castBtn.textContent = '📺 Cast not supported here — open in Chrome';
     castBtn.addEventListener('click', e => e.preventDefault());
+  }
+
+  // ---- Background / lock-screen controls (Media Session) -------------------
+  // Tells Android this is real media, so audio keeps playing with the screen
+  // off or the app in the background, and shows a notification with controls.
+  if ('mediaSession' in navigator) {
+    const ms = navigator.mediaSession;
+    const set = (a, f) => { try { ms.setActionHandler(a, f); } catch (e) {} };
+    set('play', () => { if (!isPlaying) { currentTalk ? resumeSession() : startSession(); } });
+    set('pause', () => { if (isPlaying) pauseSession(); });
+    set('nexttrack', () => { if (isPlaying) { talkFailCount = 0; loadAndPlay(pickRandomTalk()); } });
+    set('stop', () => endSession(false));
+    audio.addEventListener('playing', () => {
+      if (currentTalk) {
+        ms.metadata = new MediaMetadata({
+          title: 'प्रवचन · ' + currentTalk.part,
+          artist: 'ओशो',
+          album: currentTalk.series,
+          artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }]
+        });
+      }
+      ms.playbackState = 'playing';
+    });
+    audio.addEventListener('pause', () => { ms.playbackState = 'paused'; });
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
   // ---- Boot ---------------------------------------------------------------
